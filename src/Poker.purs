@@ -1,7 +1,7 @@
 module Data.Poker where
 
 import Control.Alt ((<|>))
-import Data.Array (all, concat, difference, drop, elemIndex, filter, find, reverse, sortBy, tail, zip, (:))
+import Data.Array (all, concat, difference, drop, elemIndex, filter, find, head, reverse, sortBy, tail, zip, (:))
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(Tuple))
 import Prelude (class Eq, class Ord, class Show, bind, compare, map, pure, show, ($), (+), (-), (<<<), (<>), (==))
@@ -94,8 +94,6 @@ hasFourOfAKind h = case find (all areSameRank <<< pairWithNext) (comb 4 h) of
   Nothing -> Nothing
   Just p  -> construct (getRank p) (getKickers h p) 
     where
-      getRank [(Card r _), _, _, _] = r
-      getRank _ = 0
 
       construct :: Rank -> (Array Kicker) -> Maybe HandValue
       construct r [k] = Just (FourOfAKind r k)
@@ -116,29 +114,17 @@ hasFlush :: Hand -> Maybe HandValue
 hasFlush h = case all areSameSuit <<< pairWithNext $ h of
   false -> Nothing
   true -> Just <<< Flush <<< getRank <<< reverse <<< sortCards $ h
-    where
-      
-      getRank :: Hand -> Rank
-      getRank [(Card r _), _, _, _, _] = r 
-      getRank _ = 0
   
 hasStraight :: Hand -> Maybe HandValue
 hasStraight h = case all areSucc <<< pairWithNext <<< sortCards $ h of
   false -> Nothing
   true  -> Just <<< Straight <<< getRank <<< reverse <<< sortCards $ h
-    where
-
-      getRank :: Hand -> Rank
-      getRank [(Card r _), _, _, _, _] = r 
-      getRank _ = 0
 
 hasThreeOfAKind :: Hand -> Maybe HandValue
 hasThreeOfAKind h = case find (all areSameRank <<< pairWithNext) (comb 3 h) of
   Nothing -> Nothing
   Just p  -> construct (getRank p) (getKickers h p) 
     where
-      getRank [(Card r _), _, _] = r
-      getRank _ = 0
 
       construct :: Rank -> (Array Kicker) -> Maybe HandValue
       construct r [k1, k2] = Just (ThreeOfAKind r k1 k2)
@@ -167,9 +153,6 @@ hasOnePair h = case find (all areSameRank <<< pairWithNext) (comb 2 h) of
   Just p  -> construct (getRank p) (getKickers h p) 
     where
 
-    getRank [(Card r _), _] = r
-    getRank _ = 0
-
     construct :: Rank -> Array Kicker -> Maybe HandValue
     construct r [k1, k2, k3] = Just (OnePair r k1 k2 k3)
     construct _ _ = Nothing
@@ -194,12 +177,16 @@ areSucc (Tuple (Card r1 _) (Card r2 _)) = r1 + 1 == r2
 getKickers :: Hand -> Array Card -> Array Kicker
 getKickers h = (map (\(Card r _) -> r)) <<< reverse <<< sortCards <<< difference h
 
+getRank :: Array Card -> Rank
+getRank h = case head h of
+  Nothing -> 0
+  Just (Card r _) -> r
+
 pairWithNext :: forall a. Array a -> Array (Tuple a a)
 pairWithNext xs
   = case tail xs of
       Nothing -> []
       Just t  -> zip xs t
-
 
 sortCards :: Array Card -> Array Card
 sortCards = sortBy (\(Card r1 _) (Card r2 _) -> compare r1 r2)
@@ -214,3 +201,4 @@ comb k n = do
 
   ys  <- comb (k - 1) xs
   pure (x : ys)
+
