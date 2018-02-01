@@ -1,10 +1,10 @@
 module Data.Poker where
 
-import Data.Array (all, any, difference, drop, elemIndex, filter, find, head, intersect, sortBy, tail, zip, (:))
-import Data.Foldable (length)
+import Control.Alt ((<|>))
+import Data.Array (all, any, concat, difference, drop, elemIndex, filter, find, reverse, sortBy, tail, zip, (:))
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(Tuple))
-import Prelude (class Eq, class Show, bind, compare, map, otherwise, pure, show, ($), (&&), (+), (-), (<<<), (<>), (==))
+import Prelude (class Eq, class Show, bind, compare, map, pure, show, ($), (+), (-), (<<<), (<>), (==))
 
 type Rank   = Int
 type Kicker = Int
@@ -33,135 +33,177 @@ derive instance eqCard :: Eq Card
 type Hand = Array Card
 
 data HandValue
-  = FiveOfAKind   --Rank
-  | StraightFlush --Rank
-  | FourOfAKind   --Rank Kicker
-  | FullHouse     --Rank Rank
-  | Flush         --Kicker Kicker Kicker Kicker Kicker
-  | Straight      --Rank
-  | ThreeOfAKind  --Rank Kicker Kicker
-  | TwoPairs      --Rank Rank Kicker
-  | OnePair       --Rank Kicker Kicker Kicker
-  | HighCard      --Kicker Kicker Kicker Kicker Kicker
+  = FiveOfAKind   Rank
+  | StraightFlush Rank
+  | FourOfAKind   Rank Kicker
+  | FullHouse     Rank Rank
+  | Flush         Rank
+  | Straight      Rank
+  | ThreeOfAKind  Rank Kicker Kicker
+  | TwoPairs      Rank Rank Kicker
+  | OnePair       Rank Kicker Kicker Kicker
+  | HighCard      Kicker Kicker Kicker Kicker Kicker
 
 instance showHandValue :: Show HandValue where
-  show FiveOfAKind = "FiveOfAKind"
-  show StraightFlush = "StraightFlush"
-  show FourOfAKind = "FourOfAKind"
-  show FullHouse = "FullHouse"
-  show Flush = "Flush"
-  show Straight = "Straight"
-  show ThreeOfAKind = "ThreeOfAKind"
-  show TwoPairs = "TwoPairs"
-  show OnePair = "OnePair"
-  show HighCard = "HighCard"
+  show (FiveOfAKind r)      = "Five of a kind, " <> show r <> "s"
+  show (StraightFlush r)    = show r <> " high straight flush"
+  show (FourOfAKind r k)    = "Four of a kind, " <> show r <> "s"
+  show (FullHouse r1 r2)    = "Full house, " <> show r1 <> "s over " <> show r2 <> "s"
+  show (Flush r)            = show r <> " high flush"
+  show (Straight r)         = show r <> " high straight"
+  show (ThreeOfAKind r _ _) = "Three " <> show r <> "s"
+  show (TwoPairs r1 r2 _)   = "Two pairs, " <> show r1 <> "s and " <> show r2 <> "s" 
+  show (OnePair r _ _ _)    = "Pair of " <> show r <> "s"
+  show (HighCard k _ _ _ _) = "High card, " <> show k
 
-getHandValue :: Hand -> HandValue
-getHandValue h
-  | hasStraightFlush h = StraightFlush
-  | hasFourOfAKind   h = FourOfAKind
-  | hasFlush         h = Flush
-  | hasStraight      h = Straight
-  | hasThreeOfAKind  h = ThreeOfAKind
-  | hasTwoPairs      h = TwoPairs
-  | hasOnePair       h = OnePair
-  | otherwise          = HighCard
-  
+getHandValue :: Hand -> Maybe HandValue
+-- getHandValue h
+--   | hasStraightFlush h = StraightFlush
+--   | hasFourOfAKind   h = FourOfAKind
+--   | hasFullHouse     h - FullHouse
+-- =======================================
+--   | hasFlush         h = Flush
+--   | hasStraight      h = Straight
+--   | hasThreeOfAKind  h = ThreeOfAKind
+--   | hasTwoPairs      h = TwoPairs
+--   | hasOne Pair      h - OnePair
+--   | otherwise          = HighCard
+
+getHandValue h 
+  =   hasStraightFlush h
+  <|> hasFlush h
+  <|> hasStraight h
+  <|> hasThreeOfAKind h
+  <|> hasTwoPairs h
+  <|> hasOnePair h
+  <|> (Just <<< hasHighCard $ h)
 
 handExample :: Hand
 handExample = [
   Card 9 Diamonds,
-  Card 8 Hearts,
-  Card 10 Diamonds,
-  Card 6 Spades,
+  Card 1 Hearts,
+  Card 11 Diamonds,
+  Card 10 Spades,
   Card 7 Diamonds
 ]
 
-hasOnePair :: Hand -> Boolean
-hasOnePair = (_ == 1) <<< length <<< getPairs 
-
-hasTwoPairs :: Hand -> Boolean
-hasTwoPairs = (_ == 2) <<< length <<< getPairs
-
-hasThreeOfAKind :: Hand -> Boolean
-hasThreeOfAKind h = any isThreeOfAKind (comb h 3)
+hasHighCard :: Hand -> HandValue
+hasHighCard h = construct <<< getKickers h $ []
   where
-    isThreeOfAKind [Card r1 _, Card r2 _, Card r3 _] = r1 == r2 && r2 == r3
-    isThreeOfAKind _ = false
+    
+    construct :: Array Kicker -> HandValue
+    construct [k1, k2, k3, k4, k5] = HighCard k1 k2 k3 k4 k5
+    construct _ = HighCard 0 0 0 0 0
 
-hasStraight :: Hand -> Boolean
-hasStraight = isStraight <<< sortBy (\(Card r1 _) (Card r2 _) -> compare r1 r2)
+hasOnePair :: Hand -> Maybe HandValue
+hasOnePair h = case find (all areSameRank <<< pairWithNext) (comb 2 h) of
+  Nothing -> Nothing
+  Just p  -> construct (getRank p) (getKickers h p) 
+    where
+
+    getRank [(Card r _), _] = r
+    getRank _ = 0
+
+    construct :: Rank -> Array Kicker -> Maybe HandValue
+    construct r [k1, k2, k3] = Just (OnePair r k1 k2 k3)
+    construct _ _ = Nothing
+      
+
+hasTwoPairs :: Hand -> Maybe HandValue
+hasTwoPairs h = construct (getRank p) (getKickers h (concat p))
   where
-    isStraight [Card r1 _, Card r2 _, Card r3 _, Card r4 _, Card r5 _]
-      =  (r1 + 1) == r2
-      && (r2 + 1) == r3
-      && (r3 + 1) == r4
-      && (r4 + 1) == r5
-    isStraight _ = false
+    p :: Array (Array Card)
+    p = getPairs h
 
-hasFlush :: Hand -> Boolean
-hasFlush h 
-  = case tail h of
-      Nothing -> true
-      Just t -> all areSameSuit (zip h t)
+    getPairs :: Array Card -> Array (Array Card)
+    getPairs h = filter (all areSameRank <<< pairWithNext) (comb 2 h)
 
-      where
-        areSameSuit (Tuple (Card _ s1) (Card _ s2)) = s1 == s2
+    getRank :: Array (Array Card) -> Array Rank
+    getRank [[(Card r1 _), _], [(Card r2 _), _]] = [r1, r2]
+    getRank _ = []
+
+    construct :: Array Rank -> Array Kicker -> Maybe HandValue
+    construct [r1, r2] [k1] = Just (TwoPairs r1 r2 k1)
+    construct _ _ = Nothing
+
+hasThreeOfAKind :: Hand -> Maybe HandValue
+hasThreeOfAKind h = case find (all areSameRank <<< pairWithNext) (comb 3 h) of
+  Nothing -> Nothing
+  Just p  -> construct (getRank p) (getKickers h p) 
+    where
+      getRank [(Card r _), _, _] = r
+      getRank _ = 0
+
+      construct :: Rank -> (Array Kicker) -> Maybe HandValue
+      construct r [k1, k2] = Just (ThreeOfAKind r k1 k2)
+      construct _ _ = Nothing
+
+hasStraight :: Hand -> Maybe HandValue
+hasStraight h = case all areSucc <<< pairWithNext <<< sortCards $ h of
+  false -> Nothing
+  true  -> Just <<< Straight <<< getRank <<< reverse <<< sortCards $ h
+    where
+
+      getRank :: Hand -> Rank
+      getRank [(Card r _), _, _, _, _] = r 
+      getRank _ = 0
+      
+
+hasFlush :: Hand -> Maybe HandValue
+hasFlush h = case all areSameSuit <<< pairWithNext $ h of
+  false -> Nothing
+  true -> Just <<< Flush <<< getRank <<< reverse <<< sortCards $ h
+    where
+      
+      getRank :: Hand -> Rank
+      getRank [(Card r _), _, _, _, _] = r 
+      getRank _ = 0
+
+-- hasFullHouse
 
 hasFourOfAKind :: Hand -> Boolean
-hasFourOfAKind h = any isFourOfAKind (comb h 4)
-  where
-    isFourOfAKind [Card r1 _, Card r2 _, Card r3 _, Card r4 _] 
-      =  r1 == r2 
-      && r2 == r3 
-      && r3 == r4
-    isFourOfAKind _ = false
+hasFourOfAKind h = any (all areSameRank <<< pairWithNext) (comb 4 h)
 
--- hasFourOfAKind' :: Hand -> Maybe HandValue
--- hasFourOfAKind' h 
---   = case find isFourOfAKind (comb h 4) of
---       Nothing -> Nothing
---       (Just v) -> Just <<< FourOfAKind (getRank v) $ (getKicker h v)
+hasStraightFlush :: Hand -> Maybe HandValue
+hasStraightFlush h = do 
+  x <- hasFlush h
+  y <- hasStraight h
+  let 
+    getRank :: HandValue -> Rank
+    getRank (Straight r) = r 
+    getRank _ = 0
 
---     where
---       isFourOfAKind [Card r1 _, Card r2 _, Card r3 _, Card r4 _] 
---         =  r1 == r2 
---         && r2 == r3 
---         && r3 == r4
---       isFourOfAKind _ = false
+  pure <<< StraightFlush <<< getRank $ y
 
---       getRank [Card r1 _, _ , _, _] = r1
---       getRank _ = 0
---       getKicker h v 
---         = case head (getKickers h v) of
---             Nothing -> 0
---             Just k  -> k
+areSameRank :: Tuple Card Card -> Boolean
+areSameRank (Tuple (Card r1 _) (Card r2 _)) = r1 == r2
 
-hasStraightFlush :: Hand -> Boolean
-hasStraightFlush h = hasFlush h && hasStraight h
+areSameSuit :: Tuple Card Card -> Boolean
+areSameSuit (Tuple (Card _ s1) (Card _ s2)) = s1 == s2
 
+areSucc :: Tuple Card Card -> Boolean
+areSucc (Tuple (Card r1 _) (Card r2 _)) = r1 + 1 == r2
 
 getKickers :: Hand -> Array Card -> Array Kicker
-getKickers h = (map (\(Card r _) -> r)) <<< sortCards <<< difference h
+getKickers h = (map (\(Card r _) -> r)) <<< reverse <<< sortCards <<< difference h
+
+pairWithNext :: forall a. Array a -> Array (Tuple a a)
+pairWithNext xs
+  = case tail xs of
+      Nothing -> []
+      Just t  -> zip xs t
 
 
 sortCards :: Array Card -> Array Card
 sortCards = sortBy (\(Card r1 _) (Card r2 _) -> compare r1 r2)
 
-getPairs :: Hand -> Array (Array Card)
-getPairs h = filter isPair (comb h 2)
-  where
-    isPair [Card r1 _, Card r2 _] = r1 == r2
-    isPair _ = false
-
-
-comb :: forall a. Eq a => Array a -> Int -> Array (Array a)
-comb n 0 = [[]]
-comb n k = do
+comb :: forall a. Eq a => Int -> Array a -> Array (Array a)
+comb 0 n = [ [] ]
+comb k n = do
   x  <- n
   let xs = case elemIndex x n of
               Nothing -> []
               Just i -> drop (i+1) n
 
-  ys  <- comb xs (k - 1)
+  ys  <- comb (k - 1) xs
   pure (x : ys)
