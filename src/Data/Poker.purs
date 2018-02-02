@@ -10,11 +10,12 @@ module Data.Poker (
 
 import Control.Alt ((<|>))
 import Control.Monad.Reader (Reader)
+import Control.MonadZero (guard)
 import Data.Array (all, concat, difference, filter, find, head, reverse, sortBy)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(Tuple))
 import Extensions.Array (comb, pairWithNext)
-import Prelude (class Eq, class Ord, class Show, bind, compare, map, pure, show, ($), (-), (<<<), (<>), (==))
+import Prelude (class Eq, class Ord, class Show, bind, compare, discard, map, pure, show, ($), (-), (<<<), (<>), (==))
 
 type Rank   = Int
 type Kicker = Int
@@ -103,9 +104,9 @@ hasStraightFlush h = do
   pure <<< StraightFlush <<< getRank $ y
 
 hasFourOfAKind :: Hand -> Maybe HandValue
-hasFourOfAKind h = case find (all areSameRank <<< pairWithNext) (comb 4 h) of
-  Nothing -> Nothing
-  Just p  -> wrap (getRank p) (getKickers h p) 
+hasFourOfAKind h = do
+  fours <- find areSameRank (comb 4 h)
+  wrap (getRank fours) (getKickers h fours) 
     where
 
       wrap :: Rank -> (Array Kicker) -> Maybe HandValue
@@ -114,29 +115,29 @@ hasFourOfAKind h = case find (all areSameRank <<< pairWithNext) (comb 4 h) of
 
 hasFullHouse :: Hand -> Maybe HandValue
 hasFullHouse h = do
-  t <- hasThreeOfAKind h
+  threes <- hasThreeOfAKind h
   let
-    threesAreFulls (ThreeOfAKind r k1 k2) = case k1 == k2 of
-      false -> Nothing
-      true  -> Just <<< FullHouse r $ k1
+    threesAreFulls (ThreeOfAKind r k1 k2) = do
+      guard $ k1 == k2
+      pure <<< FullHouse r $ k1
     threesAreFulls _ = Nothing
   
-  threesAreFulls t
+  threesAreFulls threes
 
 hasFlush :: Hand -> Maybe HandValue
-hasFlush h = case all areSameSuit <<< pairWithNext $ h of
-  false -> Nothing
-  true -> Just <<< Flush <<< getRank $ h
+hasFlush h = do
+  guard $ areSameSuit h
+  pure <<< Flush <<< getRank $ h
   
 hasStraight :: Hand -> Maybe HandValue
-hasStraight h = case all areSucc <<< pairWithNext $ h of
-  false -> Nothing
-  true  -> Just <<< Straight <<< getRank $ h
+hasStraight h = do 
+  guard $ areStraight h
+  pure <<< Straight <<< getRank $ h
 
 hasThreeOfAKind :: Hand -> Maybe HandValue
-hasThreeOfAKind h = case find (all areSameRank <<< pairWithNext) (comb 3 h) of
-  Nothing -> Nothing
-  Just p  -> wrap (getRank p) (getKickers h p) 
+hasThreeOfAKind h = do 
+  threes <- find areSameRank (comb 3 h)
+  wrap (getRank threes) (getKickers h threes) 
     where
 
       wrap :: Rank -> (Array Kicker) -> Maybe HandValue
@@ -150,7 +151,7 @@ hasTwoPairs h = wrap (getRankOfPairs p) (getKickers h (concat p))
     p = getPairs
 
     getPairs :: Array (Array Card)
-    getPairs = filter (all areSameRank <<< pairWithNext) (comb 2 h)
+    getPairs = filter areSameRank (comb 2 h)
 
     getRankOfPairs :: Array (Array Card) -> Array Rank
     getRankOfPairs [p1, p2] = [getRank p1, getRank p2]
@@ -161,9 +162,9 @@ hasTwoPairs h = wrap (getRankOfPairs p) (getKickers h (concat p))
     wrap _ _ = Nothing
 
 hasOnePair :: Hand -> Maybe HandValue
-hasOnePair h = case find (all areSameRank <<< pairWithNext) (comb 2 h) of
-  Nothing -> Nothing
-  Just p  -> wrap (getRank p) (getKickers h p) 
+hasOnePair h = do 
+  p <- find areSameRank (comb 2 h)
+  wrap (getRank p) (getKickers h p) 
     where
 
     wrap :: Rank -> Array Kicker -> Maybe HandValue
@@ -178,14 +179,20 @@ hasHighCard h = wrap <<< getKickers h $ []
     wrap [k1, k2, k3, k4, k5] = HighCard k1 k2 k3 k4 k5
     wrap _ = HighCard 0 0 0 0 0
 
-areSameRank :: Tuple Card Card -> Boolean
-areSameRank (Tuple (Card r1 _) (Card r2 _)) = r1 == r2
+areSameRank :: Array Card -> Boolean
+areSameRank = all restriction <<< pairWithNext
+  where
+    restriction (Tuple (Card r1 _) (Card r2 _)) = r1 == r2
 
-areSameSuit :: Tuple Card Card -> Boolean
-areSameSuit (Tuple (Card _ s1) (Card _ s2)) = s1 == s2
+areSameSuit :: Array Card -> Boolean
+areSameSuit = all restriction <<< pairWithNext
+  where
+    restriction (Tuple (Card _ s1) (Card _ s2)) = s1 == s2
 
-areSucc :: Tuple Card Card -> Boolean
-areSucc (Tuple (Card r1 _) (Card r2 _)) = r1 - 1 == r2
+areStraight :: Array Card -> Boolean
+areStraight = all restriction <<< pairWithNext
+  where
+    restriction (Tuple (Card r1 _) (Card r2 _)) = r1 - 1 == r2
 
 getKickers :: Hand -> Array Card -> Array Kicker
 getKickers h = (map (\(Card r _) -> r)) <<< difference h
