@@ -9,6 +9,7 @@ module Data.Poker (
 ) where
 
 import Control.Alt ((<|>))
+import Control.Monad.Reader (Reader)
 import Data.Array (all, concat, difference, filter, find, head, reverse, sortBy)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(Tuple))
@@ -67,7 +68,10 @@ derive instance eqHandValue :: Eq HandValue
 derive instance ordHandValue :: Ord HandValue
 
 getHandValue :: Hand -> Maybe HandValue
-getHandValue h 
+getHandValue = getHandValue' <<< sortCards
+
+getHandValue' :: Hand -> Maybe HandValue
+getHandValue' h 
   =   hasStraightFlush h
   <|> hasFourOfAKind h
   <|> hasFullHouse h
@@ -122,12 +126,12 @@ hasFullHouse h = do
 hasFlush :: Hand -> Maybe HandValue
 hasFlush h = case all areSameSuit <<< pairWithNext $ h of
   false -> Nothing
-  true -> Just <<< Flush <<< getRank <<< sortCards $ h
+  true -> Just <<< Flush <<< getRank $ h
   
 hasStraight :: Hand -> Maybe HandValue
-hasStraight h = case all areSucc <<< pairWithNext <<< sortCards $ h of
+hasStraight h = case all areSucc <<< pairWithNext $ h of
   false -> Nothing
-  true  -> Just <<< Straight <<< getRank <<< sortCards $ h
+  true  -> Just <<< Straight <<< getRank $ h
 
 hasThreeOfAKind :: Hand -> Maybe HandValue
 hasThreeOfAKind h = case find (all areSameRank <<< pairWithNext) (comb 3 h) of
@@ -184,7 +188,7 @@ areSucc :: Tuple Card Card -> Boolean
 areSucc (Tuple (Card r1 _) (Card r2 _)) = r1 - 1 == r2
 
 getKickers :: Hand -> Array Card -> Array Kicker
-getKickers h = (map (\(Card r _) -> r)) <<< sortCards <<< difference h
+getKickers h = (map (\(Card r _) -> r)) <<< difference h
 
 getRank :: Array Card -> Rank
 getRank h = case head h of
