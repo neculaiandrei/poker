@@ -9,9 +9,8 @@ module Data.Poker (
 ) where
 
 import Control.Alt ((<|>))
-import Control.Monad.Reader (Reader)
 import Control.MonadZero (guard)
-import Data.Array (all, concat, difference, filter, find, head, reverse, sortBy)
+import Data.Array (all, concat, difference, filter, find, head, length, reverse, sortBy)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(Tuple))
 import Extensions.Array (comb, pairWithNext)
@@ -31,14 +30,12 @@ instance showSuit :: Show Suit where
   show Clubs    = "Clubs"
   show Hearts   = "Hearts"
   show Spades   = "Spades"
-
 derive instance eqSuit :: Eq Suit
 
 data Card = Card Rank Suit
 
 instance showCard :: Show Card where
   show (Card r s) = show r <> " of " <> show s
-
 derive instance eqCard :: Eq Card
 
 type Hand = Array Card
@@ -64,7 +61,6 @@ instance showHandValue :: Show HandValue where
   show (TwoPairs r1 r2 _)   = "Two pairs, " <> show r1 <> "s and " <> show r2 <> "s" 
   show (OnePair r _ _ _)    = "Pair of " <> show r <> "s"
   show (HighCard k _ _ _ _) = "High card, " <> show k
-
 derive instance eqHandValue :: Eq HandValue
 derive instance ordHandValue :: Ord HandValue
 
@@ -145,13 +141,11 @@ hasThreeOfAKind h = do
       wrap _ _ = Nothing
 
 hasTwoPairs :: Hand -> Maybe HandValue
-hasTwoPairs h = wrap (getRankOfPairs p) (getKickers h (concat p))
+hasTwoPairs h = do
+  let pairs = filter areSameRank (comb 2 h)
+  guard $ length pairs == 2
+  wrap (getRankOfPairs pairs) (getKickers h (concat pairs))
   where
-    p :: Array (Array Card)
-    p = getPairs
-
-    getPairs :: Array (Array Card)
-    getPairs = filter areSameRank (comb 2 h)
 
     getRankOfPairs :: Array (Array Card) -> Array Rank
     getRankOfPairs [p1, p2] = [getRank p1, getRank p2]
