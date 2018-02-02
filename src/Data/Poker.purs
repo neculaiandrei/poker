@@ -1,10 +1,19 @@
-module Data.Poker where
+module Data.Poker (
+  Rank,
+  Kicker,
+  Suit,
+  Card,
+  Hand,
+  HandValue,
+  getHandValue
+) where
 
 import Control.Alt ((<|>))
-import Data.Array (all, concat, difference, drop, elemIndex, filter, find, head, reverse, sortBy, tail, zip, (:))
+import Data.Array (all, concat, difference, filter, find, head, reverse, sortBy)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(Tuple))
-import Prelude (class Eq, class Ord, class Show, bind, compare, map, pure, show, ($), (+), (-), (<<<), (<>), (==))
+import Extensions.Array (comb, pairWithNext)
+import Prelude (class Eq, class Ord, class Show, bind, compare, map, pure, show, ($), (-), (<<<), (<>), (==))
 
 type Rank   = Int
 type Kicker = Int
@@ -42,9 +51,6 @@ data HandValue
   | FullHouse     Rank Rank
   | FourOfAKind   Rank Kicker
   | StraightFlush Rank
-  
-derive instance eqHandValue :: Eq HandValue
-derive instance ordHandValue :: Ord HandValue
 
 instance showHandValue :: Show HandValue where
   show (StraightFlush r)    = show r <> " high straight flush"
@@ -56,6 +62,9 @@ instance showHandValue :: Show HandValue where
   show (TwoPairs r1 r2 _)   = "Two pairs, " <> show r1 <> "s and " <> show r2 <> "s" 
   show (OnePair r _ _ _)    = "Pair of " <> show r <> "s"
   show (HighCard k _ _ _ _) = "High card, " <> show k
+
+derive instance eqHandValue :: Eq HandValue
+derive instance ordHandValue :: Ord HandValue
 
 getHandValue :: Hand -> Maybe HandValue
 getHandValue h 
@@ -72,10 +81,10 @@ getHandValue h
 handExample :: Hand
 handExample = [
   Card 9 Diamonds,
-  Card 1 Hearts,
+  Card 9 Hearts,
   Card 11 Diamonds,
   Card 10 Spades,
-  Card 7 Diamonds
+  Card 9 Diamonds
 ]
 
 hasStraightFlush :: Hand -> Maybe HandValue
@@ -92,12 +101,12 @@ hasStraightFlush h = do
 hasFourOfAKind :: Hand -> Maybe HandValue
 hasFourOfAKind h = case find (all areSameRank <<< pairWithNext) (comb 4 h) of
   Nothing -> Nothing
-  Just p  -> construct (getRank p) (getKickers h p) 
+  Just p  -> wrap (getRank p) (getKickers h p) 
     where
 
-      construct :: Rank -> (Array Kicker) -> Maybe HandValue
-      construct r [k] = Just (FourOfAKind r k)
-      construct _ _ = Nothing
+      wrap :: Rank -> (Array Kicker) -> Maybe HandValue
+      wrap r [k] = Just (FourOfAKind r k)
+      wrap _ _ = Nothing
 
 hasFullHouse :: Hand -> Maybe HandValue
 hasFullHouse h = do
@@ -113,25 +122,25 @@ hasFullHouse h = do
 hasFlush :: Hand -> Maybe HandValue
 hasFlush h = case all areSameSuit <<< pairWithNext $ h of
   false -> Nothing
-  true -> Just <<< Flush <<< getRank <<< reverse <<< sortCards $ h
+  true -> Just <<< Flush <<< getRank <<< sortCards $ h
   
 hasStraight :: Hand -> Maybe HandValue
 hasStraight h = case all areSucc <<< pairWithNext <<< sortCards $ h of
   false -> Nothing
-  true  -> Just <<< Straight <<< getRank <<< reverse <<< sortCards $ h
+  true  -> Just <<< Straight <<< getRank <<< sortCards $ h
 
 hasThreeOfAKind :: Hand -> Maybe HandValue
 hasThreeOfAKind h = case find (all areSameRank <<< pairWithNext) (comb 3 h) of
   Nothing -> Nothing
-  Just p  -> construct (getRank p) (getKickers h p) 
+  Just p  -> wrap (getRank p) (getKickers h p) 
     where
 
-      construct :: Rank -> (Array Kicker) -> Maybe HandValue
-      construct r [k1, k2] = Just (ThreeOfAKind r k1 k2)
-      construct _ _ = Nothing
+      wrap :: Rank -> (Array Kicker) -> Maybe HandValue
+      wrap r [k1, k2] = Just (ThreeOfAKind r k1 k2)
+      wrap _ _ = Nothing
 
 hasTwoPairs :: Hand -> Maybe HandValue
-hasTwoPairs h = construct (getRank p) (getKickers h (concat p))
+hasTwoPairs h = wrap (getRankOfPairs p) (getKickers h (concat p))
   where
     p :: Array (Array Card)
     p = getPairs
@@ -139,31 +148,31 @@ hasTwoPairs h = construct (getRank p) (getKickers h (concat p))
     getPairs :: Array (Array Card)
     getPairs = filter (all areSameRank <<< pairWithNext) (comb 2 h)
 
-    getRank :: Array (Array Card) -> Array Rank
-    getRank [[(Card r1 _), _], [(Card r2 _), _]] = [r1, r2]
-    getRank _ = []
+    getRankOfPairs :: Array (Array Card) -> Array Rank
+    getRankOfPairs [p1, p2] = [getRank p1, getRank p2]
+    getRankOfPairs _ = []
 
-    construct :: Array Rank -> Array Kicker -> Maybe HandValue
-    construct [r1, r2] [k1] = Just (TwoPairs r1 r2 k1)
-    construct _ _ = Nothing
+    wrap :: Array Rank -> Array Kicker -> Maybe HandValue
+    wrap [r1, r2] [k1] = Just (TwoPairs r1 r2 k1)
+    wrap _ _ = Nothing
 
 hasOnePair :: Hand -> Maybe HandValue
 hasOnePair h = case find (all areSameRank <<< pairWithNext) (comb 2 h) of
   Nothing -> Nothing
-  Just p  -> construct (getRank p) (getKickers h p) 
+  Just p  -> wrap (getRank p) (getKickers h p) 
     where
 
-    construct :: Rank -> Array Kicker -> Maybe HandValue
-    construct r [k1, k2, k3] = Just (OnePair r k1 k2 k3)
-    construct _ _ = Nothing
+    wrap :: Rank -> Array Kicker -> Maybe HandValue
+    wrap r [k1, k2, k3] = Just (OnePair r k1 k2 k3)
+    wrap _ _ = Nothing
 
 hasHighCard :: Hand -> HandValue
-hasHighCard h = construct <<< getKickers h $ []
+hasHighCard h = wrap <<< getKickers h $ []
   where
     
-    construct :: Array Kicker -> HandValue
-    construct [k1, k2, k3, k4, k5] = HighCard k1 k2 k3 k4 k5
-    construct _ = HighCard 0 0 0 0 0
+    wrap :: Array Kicker -> HandValue
+    wrap [k1, k2, k3, k4, k5] = HighCard k1 k2 k3 k4 k5
+    wrap _ = HighCard 0 0 0 0 0
 
 areSameRank :: Tuple Card Card -> Boolean
 areSameRank (Tuple (Card r1 _) (Card r2 _)) = r1 == r2
@@ -172,33 +181,15 @@ areSameSuit :: Tuple Card Card -> Boolean
 areSameSuit (Tuple (Card _ s1) (Card _ s2)) = s1 == s2
 
 areSucc :: Tuple Card Card -> Boolean
-areSucc (Tuple (Card r1 _) (Card r2 _)) = r1 + 1 == r2
+areSucc (Tuple (Card r1 _) (Card r2 _)) = r1 - 1 == r2
 
 getKickers :: Hand -> Array Card -> Array Kicker
-getKickers h = (map (\(Card r _) -> r)) <<< reverse <<< sortCards <<< difference h
+getKickers h = (map (\(Card r _) -> r)) <<< sortCards <<< difference h
 
 getRank :: Array Card -> Rank
 getRank h = case head h of
   Nothing -> 0
   Just (Card r _) -> r
 
-pairWithNext :: forall a. Array a -> Array (Tuple a a)
-pairWithNext xs
-  = case tail xs of
-      Nothing -> []
-      Just t  -> zip xs t
-
 sortCards :: Array Card -> Array Card
-sortCards = sortBy (\(Card r1 _) (Card r2 _) -> compare r1 r2)
-
-comb :: forall a. Eq a => Int -> Array a -> Array (Array a)
-comb 0 n = [ [] ]
-comb k n = do
-  x  <- n
-  let xs = case elemIndex x n of
-              Nothing -> []
-              Just i -> drop (i+1) n
-
-  ys  <- comb (k - 1) xs
-  pure (x : ys)
-
+sortCards = reverse <<< sortBy (\(Card r1 _) (Card r2 _) -> compare r1 r2)
