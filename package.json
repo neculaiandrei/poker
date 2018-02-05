@@ -1,0 +1,27 @@
+{
+  "name": "poker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "sass" : "node-sass assets/styles main.scss --output assets/styles",
+    "build": "pulp build --to ./dist/main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neculaiandrei/poker.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/neculaiandrei/poker/issues"
+  },
+  "homepage": "https://github.com/neculaiandrei/poker#readme",
+  "dependencies": {
+    "node-sass": "^4.7.2"
+  }
+}

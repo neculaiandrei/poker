@@ -1,0 +1,122 @@
+﻿@import url(https://fonts.googleapis.com/css?family=Roboto+Condensed);
+
+body {
+  /*font-family: 'Cherry Swash', cursive;*/
+  font-family: 'Roboto Condensed', cursive;
+  user-select: none;
+}
+
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  
+  > div {
+    margin-right: 10px;
+  }
+}
+
+.card {
+  box-sizing: border-box;
+  position: relative;
+  height: 150px;
+  width: 100px;
+  background-color: #FFFFFF;
+  border: 1px solid #ACACAD;
+  border-radius: 10px;
+  box-shadow: 1px 1px 2px 1px rgba(0,0,0,0.2);
+
+  .big-symbol::after {
+    font-size: 34px;
+    line-height: 34px;
+  }
+  
+  .small-symbol {
+    margin: -5px 0;
+    
+    &::after {
+      font-size: 16px;
+      line-height: 16px;
+    }
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .number {
+    font-size: 18px;
+  }  
+  
+  .top-left-corner {
+    position: absolute;
+    left: 2px;
+    top: 0px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .right-bottom-corner {
+    position: absolute;
+    right: 2px;
+    bottom: 0px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: rotate(-180deg);
+  }
+  
+  .flex-centered {
+    justify-content: space-around;
+  }
+  
+  .flex-stretched {
+    justify-content: space-between;
+  }
+  
+  .main {
+    width: calc(100% - 36px);
+    height: calc(100% - 10px);
+    margin: 5px 18px;
+    display: flex;
+  
+    > .row {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+  
+  &-Diamonds,
+  &-Hearts {
+    color: #e50000;
+  }
+  
+  &-Diamonds {
+    .big-symbol::after,
+    .small-symbol::after {
+      content: '♦';
+    }
+  }
+  
+  &-Clubs {
+    .big-symbol::after,
+    .small-symbol::after {
+      content: '♣';
+    }
+  }
+  
+  &-Hearts {
+    .big-symbol::after,
+    .small-symbol::after {
+      content: '♥';
+    }
+  }
+  
+  &-Spades {
+    .big-symbol::after,
+    .small-symbol::after {
+      content: '♠';
+    }
+  }
+}
