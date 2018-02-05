@@ -24,7 +24,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Poker.Hand.Generator (getHand)
 import Poker.Hand.RankCalculator (getHandRank)
-import Poker.Types (Card(Card), Hand)
+import Poker.Types (Card(Card), Hand, HandRank)
 
 type State = Hand
 
@@ -47,18 +47,22 @@ component =
   initialState = []
 
   render :: State -> H.ComponentHTML Query
-  render state =
-    HH.div
-      [ HP.class_ (H.ClassName "cards") ]
-      (  renderHand state
-      <> [ HH.div_ [ HH.text <<< show <<< getHandRank $ state ]
-         , HH.button
-            [ HE.onClick (HE.input_ Generate) ]
-            [ HH.text "Generate new hand" ] ] )
+  render hand =
+    HH.div_
+      [ renderHand
+      , renderHandRank <<< getHandRank $ hand
+      , HH.button
+          [ HP.class_ (H.ClassName "new")
+          , HE.onClick (HE.input_ Generate) ]
+          [ HH.text "New hand" ]
+      ]
 
       where 
-        renderHand :: Hand -> Array (H.ComponentHTML Query)
-        renderHand = map renderCard
+        renderHand :: H.ComponentHTML Query
+        renderHand = 
+          HH.div
+            [ HP.class_ (H.ClassName "cards") ]
+            ( map renderCard hand )
         
         renderCard :: Card -> H.ComponentHTML Query
         renderCard (Card 2 s) = Two.render s
@@ -76,6 +80,10 @@ component =
         renderCard (Card 14 s) = Ace.render s
         renderCard _ = HH.div_ []
 
+        renderHandRank :: Maybe HandRank -> H.ComponentHTML Query
+        renderHandRank (Just r)  = HH.div_ [ HH.text $ "You've got " <> show r ]
+        renderHandRank Nothing   = HH.div_ [ HH.text "Wtf is this hand?" ]
+
   eval :: Query ~> H.ComponentDSL State Query Void (Aff (random :: RANDOM | eff))
   eval (Generate next) = do
     h <- H.liftEff getHand
@@ -85,3 +93,5 @@ component =
         pure next
       Nothing -> do
         pure next
+
+
