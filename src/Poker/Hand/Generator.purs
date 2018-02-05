@@ -4,30 +4,38 @@ module Poker.Hand.Generator (
 
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Random (RANDOM, randomInt)
-import Data.Array ((!!), (..))
+import Control.Monad.State (StateT, evalStateT, get, lift, put)
+import Data.Array (filter, length, (!!), (..))
 import Data.Maybe (Maybe(..))
 import Data.Traversable (sequence)
 import Data.Unfoldable (replicateA)
-import Poker.Types (Card(Card), Hand, Suit(..))
-import Prelude (bind, pure, (<<<), ($))
+import Poker.Types (Card(Card), Suit(Spades, Hearts, Diamonds, Clubs))
+import Prelude (bind, discard, pure, ($), (-), (/=), (<<<))
 
-buildDeck :: Array Card
+type Deck = Array Card
+
+buildDeck :: Deck
 buildDeck = do
   r <- 2 .. 14
   s <- [Clubs, Diamonds, Hearts, Spades]
 
   pure (Card r s)
 
-getCard :: forall eff. Array Card -> Eff (random :: RANDOM | eff) (Maybe Card)
-getCard d = do
-  i <- randomInt 0 52
+getCard :: forall eff. StateT Deck (Eff (random :: RANDOM | eff)) (Maybe Card)
+getCard = do
+  st <- get
+  i <- lift (randomInt 0 (length st - 1))
 
-  case d !! i of
-    Just c  -> pure <<< Just $ c
-    Nothing -> pure Nothing
+  case st !! i of
+    Just selectedCard -> do
+      let newSt = filter (\c-> c /= selectedCard) st
+      put newSt
+      pure <<< Just $ selectedCard
+    Nothing ->
+      pure Nothing
 
-getHand :: forall eff. Eff (random :: RANDOM | eff) (Maybe Hand)
-getHand = do
-  let deck = buildDeck
-  cards <- replicateA 5 (getCard deck)
+getHand :: forall eff. Eff ( random :: RANDOM | eff) (Maybe (Array Card))
+getHand = evalStateT (do
+  cards <- replicateA 5 getCard
   pure <<< sequence $ cards
+  ) buildDeck
