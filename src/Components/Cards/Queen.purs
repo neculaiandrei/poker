@@ -25,7 +25,7 @@ render s =
             [ HH.text "Q" ] 
         , HH.div 
             [ HP.class_ (H.ClassName "small-symbol") ]
-            [  ]
+            []
         ]
     , HH.div
         [ HP.class_ (H.ClassName "main flex-centered") ]
@@ -42,7 +42,7 @@ render s =
             [ HH.text "Q" ] 
         , HH.div 
             [ HP.class_ (H.ClassName "small-symbol") ]
-            [  ]
+            []
         ]
     ]
 

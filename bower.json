@@ -12,7 +12,8 @@
     "purescript-arrays": "latest",
     "purescript-maybe": "latest",
     "purescript-transformers": "latest",
-    "purescript-halogen": "latest"
+    "purescript-halogen": "latest",
+    "purescript-random": "latest"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0"

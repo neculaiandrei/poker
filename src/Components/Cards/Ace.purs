@@ -18,7 +18,7 @@ render s =
             [ HH.text "A" ] 
         , HH.div 
             [ HP.class_ (H.ClassName "small-symbol") ]
-            [  ]
+            []
         ]
     , HH.div
         [ HP.class_ (H.ClassName "main flex-centered") ]
@@ -26,7 +26,7 @@ render s =
           [ HP.class_ (H.ClassName "row flex-centered") ]
           [ HH.div 
               [ HP.class_ (H.ClassName "big-symbol") ]
-              [  ]
+              []
           ]
         ]
     , HH.div
@@ -36,6 +36,6 @@ render s =
             [ HH.text "A" ] 
         , HH.div 
             [ HP.class_ (H.ClassName "small-symbol") ]
-            [  ]
+            []
         ]
     ]

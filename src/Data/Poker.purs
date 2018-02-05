@@ -2,7 +2,7 @@ module Data.Poker (
   Rank,
   Kicker,
   Suit(..),
-  Card,
+  Card(..),
   Hand,
   HandValue,
   getHandValue

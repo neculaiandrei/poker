@@ -18,7 +18,7 @@ render s =
             [ HH.text "9" ] 
         , HH.div 
             [ HP.class_ (H.ClassName "small-symbol") ]
-            [  ]
+            []
         ]
     , HH.div
         [ HP.class_ (H.ClassName "main flex-stretched") ]
@@ -26,37 +26,37 @@ render s =
           [ HP.class_ (H.ClassName "row flex-stretched") ]
           [ HH.div 
               [ HP.class_ (H.ClassName "big-symbol") ]
-              [  ]
+              []
           , HH.div 
               [ HP.class_ (H.ClassName "big-symbol") ]
-              [  ]
+              []
           , HH.div 
               [ HP.class_ (H.ClassName "big-symbol") ]
-              [  ]
+              []
           , HH.div 
               [ HP.class_ (H.ClassName "big-symbol") ]
-              [  ]
+              []
           ]
         , HH.div
           [ HP.class_ (H.ClassName "row flex-centered") ]
           [ HH.div 
               [ HP.class_ (H.ClassName "big-symbol") ]
-              [  ]
+              []
           ]
         , HH.div
           [ HP.class_ (H.ClassName "row flex-stretched") ]
           [ HH.div 
               [ HP.class_ (H.ClassName "big-symbol") ]
-              [  ]
+              []
           , HH.div 
               [ HP.class_ (H.ClassName "big-symbol") ]
-              [  ]
+              []
           , HH.div 
               [ HP.class_ (H.ClassName "big-symbol") ]
-              [  ]
+              []
           , HH.div 
               [ HP.class_ (H.ClassName "big-symbol") ]
-              [  ]
+              []
           ]
         ]
     , HH.div
@@ -66,7 +66,7 @@ render s =
             [ HH.text "9" ] 
         , HH.div 
             [ HP.class_ (H.ClassName "small-symbol") ]
-            [  ]
+            []
         ]
     ]
 
