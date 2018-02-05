@@ -1,11 +1,11 @@
 module Components.Cards.Jack
 where
 
-import Data.Poker (Suit(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Prelude (show, ($), (<>))
+import Poker.Types (Suit(..))
 
 jackImage :: Suit -> String
 jackImage = case _ of

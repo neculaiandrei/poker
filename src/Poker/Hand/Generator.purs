@@ -1,16 +1,18 @@
-module Data.Generator
-where
+module Poker.Hand.Generator (
+  getHand
+) where
 
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Random (RANDOM, randomInt)
 import Data.Maybe (Maybe(..))
-import Data.Poker (Card(Card), Suit(Spades, Hearts, Diamonds, Clubs), Hand)
 import Data.Traversable (sequence)
+import Data.Unfoldable (replicateA)
+import Poker.Types (Card(Card), Suit(Spades, Hearts, Diamonds, Clubs), Hand)
 import Prelude (bind, pure, (<<<), ($))
 
-getCard :: Eff (random :: RANDOM) (Maybe Card)
+getCard :: forall eff. Eff (random :: RANDOM | eff) (Maybe Card)
 getCard = do
-  r <- randomInt 1 13
+  r <- randomInt 2 14
   s <- randomInt 1 4
   case s of
     1 -> pure <<< Just <<< Card r $ Clubs
@@ -19,12 +21,11 @@ getCard = do
     4 -> pure <<< Just <<< Card r $ Spades
     _ -> pure Nothing
 
-getHand :: Eff (random :: RANDOM) (Maybe Hand)
+getHand :: forall eff. Eff (random :: RANDOM | eff) (Maybe Hand)
 getHand = do
-  h1 <- getCard
-  h2 <- getCard
-  h3 <- getCard
-  h4 <- getCard
-  h5 <- getCard
-  
-  pure <<< sequence $ [h1, h2, h3, h4, h5]
+  cards <- replicateA 5 getCard
+  pure <<< sequence $ cards
+
+
+
+

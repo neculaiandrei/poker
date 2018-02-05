@@ -1,12 +1,12 @@
 module Components.Cards.Nine
 where
 
-import Data.Poker (Suit)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Prelude (show, (<>))
-  
+import Poker.Types (Suit)
+
 render :: forall p i. Suit -> HH.HTML p i
 render s = 
   HH.div 

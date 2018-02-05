@@ -1,11 +1,5 @@
-module Data.Poker (
-  Rank,
-  Kicker,
-  Suit(..),
-  Card(..),
-  Hand,
-  HandValue,
-  getHandValue
+module Poker.Hand.RankCalculator (
+  getHandRank
 ) where
 
 import Control.Alt ((<|>))
@@ -14,61 +8,14 @@ import Data.Array (all, concat, difference, filter, find, head, length, reverse,
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(Tuple))
 import Extensions.Array (comb, pairWithNext)
-import Prelude (class Eq, class Ord, class Show, bind, compare, discard, map, pure, show, ($), (-), (<<<), (<>), (==))
+import Poker.Types (Card(..), Hand, HandRank(..), Rank, Suit(..), Kicker)
+import Prelude (bind, compare, discard, map, pure, ($), (-), (<<<), (==))
 
-type Rank   = Int
-type Kicker = Int
+getHandRank :: Hand -> Maybe HandRank
+getHandRank = getHandRank' <<< sortCards
 
-data Suit
-  = Diamonds
-  | Clubs
-  | Hearts
-  | Spades
-
-instance showSuit :: Show Suit where
-  show Diamonds = "Diamonds"
-  show Clubs    = "Clubs"
-  show Hearts   = "Hearts"
-  show Spades   = "Spades"
-derive instance eqSuit :: Eq Suit
-
-data Card = Card Rank Suit
-
-instance showCard :: Show Card where
-  show (Card r s) = show r <> " of " <> show s
-derive instance eqCard :: Eq Card
-
-type Hand = Array Card
-
-data HandValue
-  = HighCard      Kicker Kicker Kicker Kicker Kicker
-  | OnePair       Rank Kicker Kicker Kicker
-  | TwoPairs      Rank Rank Kicker
-  | ThreeOfAKind  Rank Kicker Kicker
-  | Straight      Rank
-  | Flush         Rank
-  | FullHouse     Rank Rank
-  | FourOfAKind   Rank Kicker
-  | StraightFlush Rank
-
-instance showHandValue :: Show HandValue where
-  show (StraightFlush r)    = show r <> " high straight flush"
-  show (FourOfAKind r k)    = "Four of a kind, " <> show r <> "s"
-  show (FullHouse r1 r2)    = "Full house, " <> show r1 <> "s over " <> show r2 <> "s"
-  show (Flush r)            = show r <> " high flush"
-  show (Straight r)         = show r <> " high straight"
-  show (ThreeOfAKind r _ _) = "Three " <> show r <> "s"
-  show (TwoPairs r1 r2 _)   = "Two pairs, " <> show r1 <> "s and " <> show r2 <> "s" 
-  show (OnePair r _ _ _)    = "Pair of " <> show r <> "s"
-  show (HighCard k _ _ _ _) = "High card, " <> show k
-derive instance eqHandValue :: Eq HandValue
-derive instance ordHandValue :: Ord HandValue
-
-getHandValue :: Hand -> Maybe HandValue
-getHandValue = getHandValue' <<< sortCards
-
-getHandValue' :: Hand -> Maybe HandValue
-getHandValue' h 
+getHandRank' :: Hand -> Maybe HandRank
+getHandRank' h 
   =   hasStraightFlush h
   <|> hasFourOfAKind h
   <|> hasFullHouse h
@@ -88,28 +35,28 @@ handExample = [
   Card 9 Diamonds
 ]
 
-hasStraightFlush :: Hand -> Maybe HandValue
+hasStraightFlush :: Hand -> Maybe HandRank
 hasStraightFlush h = do 
   x <- hasFlush h
   y <- hasStraight h
   let 
-    getRank :: HandValue -> Rank
+    getRank :: HandRank -> Rank
     getRank (Straight r) = r 
     getRank _ = 0
 
   pure <<< StraightFlush <<< getRank $ y
 
-hasFourOfAKind :: Hand -> Maybe HandValue
+hasFourOfAKind :: Hand -> Maybe HandRank
 hasFourOfAKind h = do
   fours <- find areSameRank (comb 4 h)
   wrap (getRank fours) (getKickers h fours) 
     where
 
-      wrap :: Rank -> (Array Kicker) -> Maybe HandValue
+      wrap :: Rank -> (Array Kicker) -> Maybe HandRank
       wrap r [k] = Just (FourOfAKind r k)
       wrap _ _ = Nothing
 
-hasFullHouse :: Hand -> Maybe HandValue
+hasFullHouse :: Hand -> Maybe HandRank
 hasFullHouse h = do
   threes <- hasThreeOfAKind h
   let
@@ -120,27 +67,27 @@ hasFullHouse h = do
   
   threesAreFulls threes
 
-hasFlush :: Hand -> Maybe HandValue
+hasFlush :: Hand -> Maybe HandRank
 hasFlush h = do
   guard $ areSameSuit h
   pure <<< Flush <<< getRank $ h
   
-hasStraight :: Hand -> Maybe HandValue
+hasStraight :: Hand -> Maybe HandRank
 hasStraight h = do 
   guard $ areStraight h
   pure <<< Straight <<< getRank $ h
 
-hasThreeOfAKind :: Hand -> Maybe HandValue
+hasThreeOfAKind :: Hand -> Maybe HandRank
 hasThreeOfAKind h = do 
   threes <- find areSameRank (comb 3 h)
   wrap (getRank threes) (getKickers h threes) 
     where
 
-      wrap :: Rank -> (Array Kicker) -> Maybe HandValue
+      wrap :: Rank -> (Array Kicker) -> Maybe HandRank
       wrap r [k1, k2] = Just (ThreeOfAKind r k1 k2)
       wrap _ _ = Nothing
 
-hasTwoPairs :: Hand -> Maybe HandValue
+hasTwoPairs :: Hand -> Maybe HandRank
 hasTwoPairs h = do
   let pairs = filter areSameRank (comb 2 h)
   guard $ length pairs == 2
@@ -151,25 +98,25 @@ hasTwoPairs h = do
     getRankOfPairs [p1, p2] = [getRank p1, getRank p2]
     getRankOfPairs _ = []
 
-    wrap :: Array Rank -> Array Kicker -> Maybe HandValue
+    wrap :: Array Rank -> Array Kicker -> Maybe HandRank
     wrap [r1, r2] [k1] = Just (TwoPairs r1 r2 k1)
     wrap _ _ = Nothing
 
-hasOnePair :: Hand -> Maybe HandValue
+hasOnePair :: Hand -> Maybe HandRank
 hasOnePair h = do 
   p <- find areSameRank (comb 2 h)
   wrap (getRank p) (getKickers h p) 
     where
 
-    wrap :: Rank -> Array Kicker -> Maybe HandValue
+    wrap :: Rank -> Array Kicker -> Maybe HandRank
     wrap r [k1, k2, k3] = Just (OnePair r k1 k2 k3)
     wrap _ _ = Nothing
 
-hasHighCard :: Hand -> HandValue
+hasHighCard :: Hand -> HandRank
 hasHighCard h = wrap <<< getKickers h $ []
   where
     
-    wrap :: Array Kicker -> HandValue
+    wrap :: Array Kicker -> HandRank
     wrap [k1, k2, k3, k4, k5] = HighCard k1 k2 k3 k4 k5
     wrap _ = HighCard 0 0 0 0 0
 
@@ -198,3 +145,7 @@ getRank h = case head h of
 
 sortCards :: Array Card -> Array Card
 sortCards = reverse <<< sortBy (\(Card r1 _) (Card r2 _) -> compare r1 r2)
+
+
+
+

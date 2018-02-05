@@ -15,28 +15,35 @@ import Components.Cards.Six as Six
 import Components.Cards.Ten as Ten
 import Components.Cards.Three as Three
 import Components.Cards.Two as Two
+import Control.Monad.Aff (Aff)
+import Control.Monad.Eff.Random (RANDOM)
 import Data.Maybe (Maybe(..))
-import Data.Poker (Suit(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Poker.Hand.Generator (getHand)
+import Poker.Types (Hand, Suit(Diamonds, Spades, Hearts, Clubs))
 
-type State = Boolean
+type State = Hand
 
-data Query a = None a
+data Query a 
+  = Generate a
 
-myButton :: forall m. H.Component HH.HTML Query Unit Unit m
-myButton =
-  H.component
+component :: forall eff. H.Component HH.HTML Query Unit Void (Aff (random :: RANDOM | eff))
+component =
+  H.lifecycleComponent
     { initialState: const initialState
     , render
     , eval
     , receiver: const Nothing
+    , initializer: Just (H.action Generate)
+    , finalizer: Nothing
     }
   where
 
-  initialState :: State
-  initialState = false
+  initialState :: Hand
+  initialState = []
 
   render :: State -> H.ComponentHTML Query
   render state =
@@ -45,7 +52,11 @@ myButton =
       (  renderWhole Clubs 
       <> renderWhole Hearts
       <> renderWhole Spades
-      <> renderWhole Diamonds )
+      <> renderWhole Diamonds
+      <> [ HH.div_ [ HH.text <<< show $ state ]
+         , HH.button
+            [ HE.onClick (HE.input_ Generate) ]
+            [ HH.text "Generate new hand" ] ] )
 
       where 
         renderWhole s = 
@@ -63,5 +74,13 @@ myButton =
           , Queen.render s
           , King.render s ]
 
-  eval :: Query ~> H.ComponentDSL State Query Unit m
-  eval (None next) = pure next
+  eval :: Query ~> H.ComponentDSL State Query Void (Aff (random :: RANDOM | eff))
+  eval (Generate next) = do
+    h <- H.liftEff getHand
+    case h of
+      Just v -> do
+        H.put v
+        pure next
+      Nothing -> do
+        pure next
+
