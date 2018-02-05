@@ -3,7 +3,6 @@ module Components.Game where
 import Prelude
 
 import Components.Cards.Ace as Ace
-import Components.Cards.Back as Back
 import Components.Cards.Eight as Eight
 import Components.Cards.Five as Five
 import Components.Cards.Four as Four
@@ -20,7 +19,6 @@ import Data.Maybe (Maybe(..))
 import Data.Poker (Suit(..))
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 
 type State = Boolean

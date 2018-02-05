@@ -1,12 +1,19 @@
 module Components.Cards.King
 where
 
-import Data.Poker (Suit)
+import Data.Poker (Suit(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Prelude (show, (<>))
+import Prelude (show, ($), (<>))
   
+kingImage :: Suit -> String
+kingImage = case _ of
+  Clubs -> "./assets/images/face-king-club.png"
+  Diamonds -> "./assets/images/face-king-diamond.png"
+  Hearts -> "./assets/images/face-king-heart.png"
+  Spades -> "./assets/images/face-king-spade.png"
+
 render :: forall p i. Suit -> HH.HTML p i
 render s = 
   HH.div 
@@ -25,7 +32,7 @@ render s =
         [ HH.div
           [ HP.class_ (H.ClassName "row flex-centered") ]
           [ HH.img 
-              [ HP.src "https://image.ibb.co/hOxGDm/face_jack_spade.png" ]
+              [ HP.src $ kingImage s ]
           ]
         ]
     , HH.div
@@ -38,4 +45,6 @@ render s =
             [  ]
         ]
     ]
+
+
 
