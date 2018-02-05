@@ -23,7 +23,8 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Poker.Hand.Generator (getHand)
-import Poker.Types (Hand, Suit(Diamonds, Spades, Hearts, Clubs))
+import Poker.Hand.RankCalculator (getHandRank)
+import Poker.Types (Card(Card), Hand)
 
 type State = Hand
 
@@ -49,30 +50,31 @@ component =
   render state =
     HH.div
       [ HP.class_ (H.ClassName "cards") ]
-      (  renderWhole Clubs 
-      <> renderWhole Hearts
-      <> renderWhole Spades
-      <> renderWhole Diamonds
-      <> [ HH.div_ [ HH.text <<< show $ state ]
+      (  renderHand state
+      <> [ HH.div_ [ HH.text <<< show <<< getHandRank $ state ]
          , HH.button
             [ HE.onClick (HE.input_ Generate) ]
             [ HH.text "Generate new hand" ] ] )
 
       where 
-        renderWhole s = 
-          [ Ace.render s
-          , Two.render s
-          , Three.render s
-          , Four.render s
-          , Five.render s
-          , Six.render s
-          , Seven.render s
-          , Eight.render s
-          , Nine.render s
-          , Ten.render s
-          , Jack.render s
-          , Queen.render s
-          , King.render s ]
+        renderHand :: Hand -> Array (H.ComponentHTML Query)
+        renderHand = map renderCard
+        
+        renderCard :: Card -> H.ComponentHTML Query
+        renderCard (Card 2 s) = Two.render s
+        renderCard (Card 3 s) = Three.render s
+        renderCard (Card 4 s) = Four.render s
+        renderCard (Card 5 s) = Five.render s
+        renderCard (Card 6 s) = Six.render s
+        renderCard (Card 7 s) = Seven.render s
+        renderCard (Card 8 s) = Eight.render s
+        renderCard (Card 9 s) = Nine.render s
+        renderCard (Card 10 s) = Ten.render s
+        renderCard (Card 11 s) = Jack.render s
+        renderCard (Card 12 s) = Queen.render s
+        renderCard (Card 13 s) = King.render s
+        renderCard (Card 14 s) = Ace.render s
+        renderCard _ = HH.div_ []
 
   eval :: Query ~> H.ComponentDSL State Query Void (Aff (random :: RANDOM | eff))
   eval (Generate next) = do
@@ -83,4 +85,3 @@ component =
         pure next
       Nothing -> do
         pure next
-

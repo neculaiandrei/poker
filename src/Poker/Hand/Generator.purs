@@ -4,28 +4,30 @@ module Poker.Hand.Generator (
 
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Random (RANDOM, randomInt)
+import Data.Array ((!!), (..))
 import Data.Maybe (Maybe(..))
 import Data.Traversable (sequence)
 import Data.Unfoldable (replicateA)
-import Poker.Types (Card(Card), Suit(Spades, Hearts, Diamonds, Clubs), Hand)
+import Poker.Types (Card(Card), Hand, Suit(..))
 import Prelude (bind, pure, (<<<), ($))
 
-getCard :: forall eff. Eff (random :: RANDOM | eff) (Maybe Card)
-getCard = do
-  r <- randomInt 2 14
-  s <- randomInt 1 4
-  case s of
-    1 -> pure <<< Just <<< Card r $ Clubs
-    2 -> pure <<< Just <<< Card r $ Diamonds
-    3 -> pure <<< Just <<< Card r $ Hearts
-    4 -> pure <<< Just <<< Card r $ Spades
-    _ -> pure Nothing
+buildDeck :: Array Card
+buildDeck = do
+  r <- 2 .. 14
+  s <- [Clubs, Diamonds, Hearts, Spades]
+
+  pure (Card r s)
+
+getCard :: forall eff. Array Card -> Eff (random :: RANDOM | eff) (Maybe Card)
+getCard d = do
+  i <- randomInt 0 52
+
+  case d !! i of
+    Just c  -> pure <<< Just $ c
+    Nothing -> pure Nothing
 
 getHand :: forall eff. Eff (random :: RANDOM | eff) (Maybe Hand)
 getHand = do
-  cards <- replicateA 5 getCard
+  let deck = buildDeck
+  cards <- replicateA 5 (getCard deck)
   pure <<< sequence $ cards
-
-
-
-
