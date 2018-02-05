@@ -1,7 +1,7 @@
 module Data.Poker (
   Rank,
   Kicker,
-  Suit,
+  Suit(..),
   Card,
   Hand,
   HandValue,

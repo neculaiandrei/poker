@@ -1,4 +1,4 @@
-@import url(https://fonts.googleapis.com/css?family=Roboto+Condensed);
+﻿@import url(https://fonts.googleapis.com/css?family=Roboto+Condensed);
  body {
     /*font-family: 'Cherry Swash', cursive;
     */
@@ -9,20 +9,49 @@
      width: 100%;
      height: 100%;
 }
- .big-symbol {
-     font-size: 34px;
-     line-height: 34px;
-}
+ .card.card-Diamonds,
+ .card.card-Hearts {
+     color: #e50000;
+ }
+ .card.card-Spades .big-symbol::after,
+ .card.card-Spades .small-symbol::after {
+     content: '♠';
+ }
+
+ .card.card-Diamonds .big-symbol::after,
+ .card.card-Diamonds .small-symbol::after {
+     content: '♦';
+ }
+
+ .card.card-Hearts .big-symbol::after,
+ .card.card-Hearts .small-symbol::after {
+     content: '♥';
+ }
+
+ .card.card-Clubs .big-symbol:after,
+ .card.card-Clubs .small-symbol:after {
+     content: "♣";
+ }
+
+ .big-symbol::after {
+    font-size: 34px;
+    line-height: 34px;
+ }
  .small-symbol {
-     font-size: 16px;
-     line-height: 16px;
+    font-size: 16px;
+    line-height: 16px;   
      margin: -5px 0;
 }
+ .small-symbol::after {
+    font-size: 16px;
+    line-height: 16px;   
+ }
  .number {
      font-size: 18px;
 }
  .cards {
      display: flex;
+     flex-wrap: wrap;
 }
  .cards > div {
      margin-right: 10px;
@@ -36,9 +65,6 @@
      border: 1px solid #ACACAD;
      border-radius: 10px;
      box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.2);
-}
- .card-red {
-     color: #e50000;
 }
  .card .top-left-corner {
      position: absolute;
