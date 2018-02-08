@@ -13,7 +13,8 @@
     "purescript-maybe": "latest",
     "purescript-transformers": "latest",
     "purescript-halogen": "latest",
-    "purescript-random": "latest"
+    "purescript-random": "latest",
+    "purescript-quickcheck": "latest"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0"
