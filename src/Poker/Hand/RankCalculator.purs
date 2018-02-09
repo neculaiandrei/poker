@@ -5,11 +5,12 @@ module Poker.Hand.RankCalculator (
 import Control.Alt ((<|>))
 import Control.MonadZero (guard)
 import Data.Array (all, concat, difference, filter, find, head, length, reverse, sortBy)
+import Data.Enum (pred)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(Tuple))
 import Extensions.Array (comb, pairWithNext)
-import Poker.Types (Card(..), Hand, HandRank(..), Rank, Suit(..), Kicker)
-import Prelude (bind, compare, discard, map, pure, ($), (-), (<<<), (==))
+import Poker.Types (Card(..), Hand, HandRank(..), Kicker, Rank(..), Suit(..))
+import Prelude (bind, compare, discard, map, pure, ($), (<<<), (==))
 
 getHandRank :: Hand -> Maybe HandRank
 getHandRank = getHandRank' <<< sortCards
@@ -24,15 +25,15 @@ getHandRank' h
   <|> hasThreeOfAKind h
   <|> hasTwoPairs h
   <|> hasOnePair h
-  <|> (Just <<< hasHighCard $ h)
+  <|> hasHighCard h
 
 handExample :: Hand
 handExample = [
-  Card 9 Diamonds,
-  Card 9 Hearts,
-  Card 11 Diamonds,
-  Card 10 Spades,
-  Card 9 Diamonds
+  Card Nine Diamonds,
+  Card Nine Hearts,
+  Card Jack Diamonds,
+  Card Ten Spades, 
+  Card Nine Diamonds
 ]
 
 hasStraightFlush :: Hand -> Maybe HandRank
@@ -42,7 +43,7 @@ hasStraightFlush h = do
   let 
     getRank :: HandRank -> Rank
     getRank (Straight r) = r 
-    getRank _ = 0
+    getRank _ = Two
 
   pure <<< StraightFlush <<< getRank $ y
 
@@ -112,13 +113,13 @@ hasOnePair h = do
     wrap r [k1, k2, k3] = Just (OnePair r k1 k2 k3)
     wrap _ _ = Nothing
 
-hasHighCard :: Hand -> HandRank
+hasHighCard :: Hand -> Maybe HandRank
 hasHighCard h = wrap <<< getKickers h $ []
   where
     
-    wrap :: Array Kicker -> HandRank
-    wrap [k1, k2, k3, k4, k5] = HighCard k1 k2 k3 k4 k5
-    wrap _ = HighCard 0 0 0 0 0
+    wrap :: Array Kicker -> Maybe HandRank
+    wrap [k1, k2, k3, k4, k5] = Just (HighCard k1 k2 k3 k4 k5)
+    wrap _ = Nothing
 
 areSameRank :: Array Card -> Boolean
 areSameRank = all restriction <<< pairWithNext
@@ -133,19 +134,18 @@ areSameSuit = all restriction <<< pairWithNext
 areStraight :: Array Card -> Boolean
 areStraight = all restriction <<< pairWithNext
   where
-    restriction (Tuple (Card r1 _) (Card r2 _)) = r1 - 1 == r2
+    restriction (Tuple (Card r1 _) (Card r2 _)) = pred r1 == Just r2
 
 getKickers :: Hand -> Array Card -> Array Kicker
 getKickers h = (map (\(Card r _) -> r)) <<< difference h
 
 getRank :: Array Card -> Rank
 getRank h = case head h of
-  Nothing -> 0
+  Nothing -> Two
   Just (Card r _) -> r
 
 sortCards :: Array Card -> Array Card
 sortCards = reverse <<< sortBy (\(Card r1 _) (Card r2 _) -> compare r1 r2)
-
 
 
 

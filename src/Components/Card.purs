@@ -16,21 +16,19 @@ import Components.Cards.Ten as Ten
 import Components.Cards.Three as Three
 import Components.Cards.Two as Two
 import Halogen.HTML as HH
-import Poker.Types (Card(..))
+import Poker.Types (Card(..), Rank(..))
 
 render :: forall p i. Card -> HH.HTML p i
-render (Card 2 s) = Two.render s
-render (Card 3 s) = Three.render s
-render (Card 4 s) = Four.render s
-render (Card 5 s) = Five.render s
-render (Card 6 s) = Six.render s
-render (Card 7 s) = Seven.render s
-render (Card 8 s) = Eight.render s
-render (Card 9 s) = Nine.render s
-render (Card 10 s) = Ten.render s
-render (Card 11 s) = Jack.render s
-render (Card 12 s) = Queen.render s
-render (Card 13 s) = King.render s
-render (Card 14 s) = Ace.render s
-render _ = HH.div_ []
-
+render (Card Two s) = Two.render s
+render (Card Three s) = Three.render s
+render (Card Four s) = Four.render s
+render (Card Five s) = Five.render s
+render (Card Six s) = Six.render s
+render (Card Seven s) = Seven.render s
+render (Card Eight s) = Eight.render s
+render (Card Nine s) = Nine.render s
+render (Card Ten s) = Ten.render s
+render (Card Jack s) = Jack.render s
+render (Card Queen s) = Queen.render s
+render (Card King s) = King.render s
+render (Card Ace s) = Ace.render s

@@ -5,18 +5,18 @@ module Poker.Hand.Generator (
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Random (RANDOM, randomInt)
 import Control.Monad.State (StateT, evalStateT, get, lift, put)
-import Data.Array (filter, length, (!!), (..))
+import Data.Array (filter, length, (!!))
 import Data.Maybe (Maybe(..))
 import Data.Traversable (sequence)
 import Data.Unfoldable (replicateA)
-import Poker.Types (Card(Card), Suit(Spades, Hearts, Diamonds, Clubs))
+import Poker.Types (Card(..), Rank(..), Suit(..))
 import Prelude (bind, discard, pure, ($), (-), (/=), (<<<))
 
 type Deck = Array Card
 
 buildDeck :: Deck
 buildDeck = do
-  r <- 2 .. 14
+  r <- [Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace]
   s <- [Clubs, Diamonds, Hearts, Spades]
 
   pure (Card r s)
