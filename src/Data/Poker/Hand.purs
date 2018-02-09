@@ -8,11 +8,14 @@ module Data.Poker.Hand (
 import Control.MonadZero (guard)
 import Data.Array (length)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
 import Data.Poker.Card (Card, Rank)
 import Extensions.Array (hasDuplicates)
 import Prelude (class Eq, class Ord, class Show, discard, show, ($), (<<<), (<>), (==))
 
 newtype Hand = Hand (Array Card)
+
+derive instance newtypeHand :: Newtype Hand _
 
 type Kicker = Rank
 

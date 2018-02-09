@@ -7,9 +7,10 @@ import Control.Monad.Eff.Random (RANDOM, randomInt)
 import Control.Monad.State (StateT, evalStateT, get, lift, put)
 import Data.Array (filter, length, (!!))
 import Data.Maybe (Maybe(..))
+import Data.Poker.Card (Card(..), Rank(..), Suit(..))
+import Data.Poker.Hand (hand, Hand)
 import Data.Traversable (sequence)
 import Data.Unfoldable (replicateA)
-import Data.Poker.Card (Card(..), Rank(..), Suit(..))
 import Prelude (bind, discard, pure, ($), (-), (/=), (<<<))
 
 type Deck = Array Card
@@ -34,8 +35,10 @@ generateCard = do
     Nothing ->
       pure Nothing
 
-generateHand :: forall eff. Eff ( random :: RANDOM | eff) (Maybe (Array Card))
+generateHand :: forall eff. Eff ( random :: RANDOM | eff) (Maybe Hand)
 generateHand = evalStateT (do
   cards <- replicateA 5 generateCard
-  pure <<< sequence $ cards
+  case sequence cards of
+    Nothing -> pure Nothing
+    (Just v) -> pure <<< hand $ v
   ) makeDeck

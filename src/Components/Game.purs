@@ -7,13 +7,13 @@ import Control.Monad.Aff (Aff)
 import Control.Monad.Eff.Random (RANDOM)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Data.Poker (Card(..), Hand, HandRank, generateHand, getHandRank, hand)
+import Data.Poker (Hand, HandRank, generateHand, getHandRank)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 
-type State = Hand
+type State = Maybe Hand
 
 data Query a 
   = Generate a
@@ -21,7 +21,7 @@ data Query a
 component :: forall eff. H.Component HH.HTML Query Unit Void (Aff (random :: RANDOM | eff))
 component =
   H.lifecycleComponent
-    { initialState: const initialState
+    { initialState: const Nothing
     , render
     , eval
     , receiver: const Nothing
@@ -30,11 +30,9 @@ component =
     }
   where
 
-  initialState :: Hand
-  initialState = []
-
   render :: State -> H.ComponentHTML Query
-  render h =
+  render Nothing  = HH.div_ []
+  render (Just h) =
     HH.div_
       [ renderHand
       , renderHandRank <<< getHandRank $ h
@@ -52,7 +50,7 @@ component =
             ( map CC.render (unwrap h) )
 
         renderHandRank :: Maybe HandRank -> H.ComponentHTML Query
-        renderHandRank (Just r)  = HH.div_ [ HH.text $ "You've got " <> show r ]
+        renderHandRank (Just r)  = HH.div_ [ HH.text <<< show $ r ]
         renderHandRank Nothing   = HH.div_ [ HH.text "Wtf is this hand?" ]
 
   eval :: Query ~> H.ComponentDSL State Query Void (Aff (random :: RANDOM | eff))
@@ -60,7 +58,7 @@ component =
     h <- H.liftEff generateHand
     case h of
       Just v -> do
-        H.put v
+        H.put <<< Just $ v
         pure next
       Nothing -> do
         pure next
