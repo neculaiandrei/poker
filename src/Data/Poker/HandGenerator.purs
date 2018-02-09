@@ -1,4 +1,4 @@
-module Poker.Hand.Generator (
+module Data.Poker.HandGenerator (
   getHand
 ) where
 
@@ -9,13 +9,13 @@ import Data.Array (filter, length, (!!))
 import Data.Maybe (Maybe(..))
 import Data.Traversable (sequence)
 import Data.Unfoldable (replicateA)
-import Poker.Types (Card(..), Rank(..), Suit(..))
+import Data.Poker.Card (Card(..), Rank(..), Suit(..))
 import Prelude (bind, discard, pure, ($), (-), (/=), (<<<))
 
 type Deck = Array Card
 
-buildDeck :: Deck
-buildDeck = do
+makeDeck :: Deck
+makeDeck = do
   r <- [Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace]
   s <- [Clubs, Diamonds, Hearts, Spades]
 
@@ -38,4 +38,4 @@ getHand :: forall eff. Eff ( random :: RANDOM | eff) (Maybe (Array Card))
 getHand = evalStateT (do
   cards <- replicateA 5 getCard
   pure <<< sequence $ cards
-  ) buildDeck
+  ) makeDeck

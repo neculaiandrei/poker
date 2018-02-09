@@ -5,7 +5,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Prelude (show, (<>))
-import Poker.Types (Suit)
+import Data.Poker (Suit)
 
 render :: forall p i. Suit -> HH.HTML p i
 render s = 

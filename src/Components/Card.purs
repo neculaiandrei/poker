@@ -16,7 +16,7 @@ import Components.Cards.Ten as Ten
 import Components.Cards.Three as Three
 import Components.Cards.Two as Two
 import Halogen.HTML as HH
-import Poker.Types (Card(..), Rank(..))
+import Data.Poker (Card(..), Rank(..))
 
 render :: forall p i. Card -> HH.HTML p i
 render (Card Two s) = Two.render s

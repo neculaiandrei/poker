@@ -10,9 +10,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Poker.Hand.Generator (getHand)
-import Poker.Hand.RankCalculator (getHandRank)
-import Poker.Types (Hand, HandRank)
+import Data.Poker (Hand, HandRank, getHand, getHandRank)
 
 type State = Hand
 

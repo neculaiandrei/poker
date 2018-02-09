@@ -1,4 +1,4 @@
-module Poker.Hand.RankCalculator (
+module Data.Poker.HandRankCalculator (
   getHandRank
 ) where
 
@@ -9,7 +9,8 @@ import Data.Enum (pred)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(Tuple))
 import Extensions.Array (comb, pairWithNext)
-import Poker.Types (Card(..), Hand, HandRank(..), Kicker, Rank(..), Suit(..))
+import Data.Poker.Card (Card(..), Rank(..), Suit(..))
+import Data.Poker.Hand (Hand, HandRank(..), Kicker)
 import Prelude (bind, compare, discard, map, pure, ($), (<<<), (==))
 
 getHandRank :: Hand -> Maybe HandRank
@@ -41,16 +42,16 @@ hasStraightFlush h = do
   x <- hasFlush h
   y <- hasStraight h
   let 
-    getRank :: HandRank -> Rank
-    getRank (Straight r) = r 
-    getRank _ = Two
+    getHighestCard :: HandRank -> Rank
+    getHighestCard (Straight r) = r 
+    getHighestCard _ = Two
 
-  pure <<< StraightFlush <<< getRank $ y
+  pure <<< StraightFlush <<< getHighestCard $ y
 
 hasFourOfAKind :: Hand -> Maybe HandRank
 hasFourOfAKind h = do
   fours <- find areSameRank (comb 4 h)
-  wrap (getRank fours) (getKickers h fours) 
+  wrap (getHighestCard fours) (getKickers h fours) 
     where
 
       wrap :: Rank -> (Array Kicker) -> Maybe HandRank
@@ -71,17 +72,17 @@ hasFullHouse h = do
 hasFlush :: Hand -> Maybe HandRank
 hasFlush h = do
   guard $ areSameSuit h
-  pure <<< Flush <<< getRank $ h
+  pure <<< Flush <<< getHighestCard $ h
   
 hasStraight :: Hand -> Maybe HandRank
 hasStraight h = do 
   guard $ areStraight h
-  pure <<< Straight <<< getRank $ h
+  pure <<< Straight <<< getHighestCard $ h
 
 hasThreeOfAKind :: Hand -> Maybe HandRank
 hasThreeOfAKind h = do 
   threes <- find areSameRank (comb 3 h)
-  wrap (getRank threes) (getKickers h threes) 
+  wrap (getHighestCard threes) (getKickers h threes) 
     where
 
       wrap :: Rank -> (Array Kicker) -> Maybe HandRank
@@ -96,7 +97,7 @@ hasTwoPairs h = do
   where
 
     getRankOfPairs :: Array (Array Card) -> Array Rank
-    getRankOfPairs [p1, p2] = [getRank p1, getRank p2]
+    getRankOfPairs [p1, p2] = [getHighestCard p1, getHighestCard p2]
     getRankOfPairs _ = []
 
     wrap :: Array Rank -> Array Kicker -> Maybe HandRank
@@ -106,7 +107,7 @@ hasTwoPairs h = do
 hasOnePair :: Hand -> Maybe HandRank
 hasOnePair h = do 
   p <- find areSameRank (comb 2 h)
-  wrap (getRank p) (getKickers h p) 
+  wrap (getHighestCard p) (getKickers h p) 
     where
 
     wrap :: Rank -> Array Kicker -> Maybe HandRank
@@ -139,8 +140,8 @@ areStraight = all restriction <<< pairWithNext
 getKickers :: Hand -> Array Card -> Array Kicker
 getKickers h = (map (\(Card r _) -> r)) <<< difference h
 
-getRank :: Array Card -> Rank
-getRank h = case head h of
+getHighestCard :: Array Card -> Rank
+getHighestCard h = case head h of
   Nothing -> Two
   Just (Card r _) -> r
 
