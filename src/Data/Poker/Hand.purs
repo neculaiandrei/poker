@@ -1,11 +1,16 @@
 module Data.Poker.Hand (
   Hand(..),
   HandRank(..),
-  Kicker(..)
+  Kicker(..),
+  hand
 ) where
 
+import Control.MonadZero (guard)
+import Data.Array (length)
+import Data.Maybe (Maybe(..))
 import Data.Poker.Card (Card, Rank)
-import Prelude (class Eq, class Ord, class Show, show, (<>))
+import Extensions.Array (hasDuplicates)
+import Prelude (class Eq, class Ord, class Show, discard, show, (<>), (==), ($))
 
 type Hand = Array Card
 
@@ -35,3 +40,10 @@ instance showHandRank :: Show HandRank where
   show (TwoPairs r1 r2 _)   = "Two pairs, " <> show r1 <> "s and " <> show r2 <> "s" 
   show (OnePair r _ _ _)    = "Pair of " <> show r <> "s"
   show (HighCard k _ _ _ _) = "High card, " <> show k
+
+
+hand :: Array Card -> Maybe (Array Card)
+hand xs = do
+  guard $ length xs == 5
+  guard $ hasDuplicates xs
+  Just xs

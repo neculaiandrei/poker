@@ -1,5 +1,5 @@
 module Data.Poker.HandGenerator (
-  getHand
+  generateHand
 ) where
 
 import Control.Monad.Eff (Eff)
@@ -21,8 +21,8 @@ makeDeck = do
 
   pure (Card r s)
 
-getCard :: forall eff. StateT Deck (Eff (random :: RANDOM | eff)) (Maybe Card)
-getCard = do
+generateCard :: forall eff. StateT Deck (Eff (random :: RANDOM | eff)) (Maybe Card)
+generateCard = do
   st <- get
   i <- lift (randomInt 0 (length st - 1))
 
@@ -34,8 +34,8 @@ getCard = do
     Nothing ->
       pure Nothing
 
-getHand :: forall eff. Eff ( random :: RANDOM | eff) (Maybe (Array Card))
-getHand = evalStateT (do
-  cards <- replicateA 5 getCard
+generateHand :: forall eff. Eff ( random :: RANDOM | eff) (Maybe (Array Card))
+generateHand = evalStateT (do
+  cards <- replicateA 5 generateCard
   pure <<< sequence $ cards
   ) makeDeck

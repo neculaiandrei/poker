@@ -6,13 +6,13 @@ import Component.Card as CC
 import Control.Monad.Aff (Aff)
 import Control.Monad.Eff.Random (RANDOM)
 import Data.Maybe (Maybe(..))
+import Data.Poker (Card(..), HandRank, generateHand, getHandRank, hand)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Data.Poker (Hand, HandRank, getHand, getHandRank)
 
-type State = Hand
+type State = Array Card
 
 data Query a 
   = Generate a
@@ -29,7 +29,7 @@ component =
     }
   where
 
-  initialState :: Hand
+  initialState :: Array Card
   initialState = []
 
   render :: State -> H.ComponentHTML Query
@@ -56,13 +56,10 @@ component =
 
   eval :: Query ~> H.ComponentDSL State Query Void (Aff (random :: RANDOM | eff))
   eval (Generate next) = do
-    h <- H.liftEff getHand
+    h <- H.liftEff generateHand
     case h of
       Just v -> do
         H.put v
         pure next
       Nothing -> do
         pure next
-
-
-
