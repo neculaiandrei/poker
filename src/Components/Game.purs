@@ -6,13 +6,14 @@ import Component.Card as CC
 import Control.Monad.Aff (Aff)
 import Control.Monad.Eff.Random (RANDOM)
 import Data.Maybe (Maybe(..))
-import Data.Poker (Card(..), HandRank, generateHand, getHandRank, hand)
+import Data.Newtype (unwrap)
+import Data.Poker (Card(..), Hand, HandRank, generateHand, getHandRank, hand)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 
-type State = Array Card
+type State = Hand
 
 data Query a 
   = Generate a
@@ -29,14 +30,14 @@ component =
     }
   where
 
-  initialState :: Array Card
+  initialState :: Hand
   initialState = []
 
   render :: State -> H.ComponentHTML Query
-  render hand =
+  render h =
     HH.div_
       [ renderHand
-      , renderHandRank <<< getHandRank $ hand
+      , renderHandRank <<< getHandRank $ h
       , HH.button
           [ HP.class_ (H.ClassName "new")
           , HE.onClick (HE.input_ Generate) ]
@@ -48,7 +49,7 @@ component =
         renderHand = 
           HH.div
             [ HP.class_ (H.ClassName "cards") ]
-            ( map CC.render hand )
+            ( map CC.render (unwrap h) )
 
         renderHandRank :: Maybe HandRank -> H.ComponentHTML Query
         renderHandRank (Just r)  = HH.div_ [ HH.text $ "You've got " <> show r ]

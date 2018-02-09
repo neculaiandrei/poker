@@ -10,9 +10,9 @@ import Data.Array (length)
 import Data.Maybe (Maybe(..))
 import Data.Poker.Card (Card, Rank)
 import Extensions.Array (hasDuplicates)
-import Prelude (class Eq, class Ord, class Show, discard, show, (<>), (==), ($))
+import Prelude (class Eq, class Ord, class Show, discard, show, ($), (<<<), (<>), (==))
 
-type Hand = Array Card
+newtype Hand = Hand (Array Card)
 
 type Kicker = Rank
 
@@ -42,8 +42,8 @@ instance showHandRank :: Show HandRank where
   show (HighCard k _ _ _ _) = "High card, " <> show k
 
 
-hand :: Array Card -> Maybe (Array Card)
+hand :: Array Card -> Maybe Hand
 hand xs = do
   guard $ length xs == 5
   guard $ hasDuplicates xs
-  Just xs
+  Just <<< Hand $ xs
