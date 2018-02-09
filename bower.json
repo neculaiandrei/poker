@@ -7,14 +7,8 @@
     "output"
   ],
   "dependencies": {
-    "purescript-prelude": "latest",
-    "purescript-console": "latest",
-    "purescript-arrays": "latest",
-    "purescript-maybe": "latest",
-    "purescript-transformers": "latest",
     "purescript-halogen": "latest",
-    "purescript-random": "latest",
-    "purescript-quickcheck": "latest"
+    "purescript-random": "latest"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0"
